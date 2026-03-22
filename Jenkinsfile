@@ -1,97 +1,55 @@
 pipeline {
     agent any
-
-    // Define environment variables by pulling them from Jenkins Credentials
     environment {
-        DOCKER_USERNAME = credentials('docker-hub-username')
-        DOCKER_PASSWORD = credentials('docker-hub-password')
-        EC2_HOST        = credentials('ec2-public-ip')
-        EC2_USER        = credentials('ec2-username') // Usually 'ubuntu' or 'ec2-user'
+        // Pulls your Docker Hub credentials securely from Jenkins
+        DOCKER_CREDS = credentials('docker-hub-credentials') 
+        // Define the variables for your specific tagging format
+        REG_NO = "2023BCD0026"
+        ROLL_NO = "2023BCD0026"
+        // Construct the full image tags dynamically
+        FRONTEND_IMAGE = "${DOCKER_CREDS_USR}/${REG_NO}_${ROLL_NO}_frontend:latest"
+        BACKEND_IMAGE = "${DOCKER_CREDS_USR}/${REG_NO}_${ROLL_NO}_backend:latest"
     }
-
     stages {
-        stage('Checkout') {
+        stage('1. Checkout Code') {
             steps {
-                // Pulls the source code from your GitHub repository
-                checkout scm
+                // Pulls the latest code from your main branch
+                git branch: 'main', url: 'https://github.com/Stranger542/DevOps-game-hub.git'
             }
         }
-
-        stage('Docker Login') {
+        stage('2. Build Docker Images') {
             steps {
-                // Log in to Docker Hub so we can push the images
-                sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                echo "Building Frontend Image: ${FRONTEND_IMAGE}"
+                sh "docker build -t ${FRONTEND_IMAGE} ./frontend"       
+                echo "Building Backend Image: ${BACKEND_IMAGE}"
+                sh "docker build -t ${BACKEND_IMAGE} ./backend"
             }
         }
-
-        stage('Build and Push Backend') {
+        stage('3. Docker Hub Login') {
             steps {
-                dir('backend') {
-                    sh "docker build -t ${DOCKER_USERNAME}/game-hub-backend:latest ."
-                    sh "docker push ${DOCKER_USERNAME}/game-hub-backend:latest"
-                }
+                // Securely log into Docker Hub using the credentials block
+                sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
             }
         }
-
-        stage('Build and Push Frontend') {
+        stage('4. Push Images to Docker Hub') {
             steps {
-                dir('frontend') {
-                    sh "docker build -t ${DOCKER_USERNAME}/game-hub-frontend:latest ."
-                    sh "docker push ${DOCKER_USERNAME}/game-hub-frontend:latest"
-                }
-            }
-        }
-
-        stage('Deploy to EC2') {
-            steps {
-                // Requires the 'SSH Agent' plugin installed in Jenkins
-                // 'ec2-ssh-key' is the ID of the private key credential stored in Jenkins
-                sshagent(['ec2-ssh-key']) {
-                    sh '''
-                        // SSH into the EC2 instance and run deployment commands
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << 'EOF'
-                            mkdir -p ~/game-hub
-                            cd ~/game-hub
-                            
-                            // Recreate the docker-compose file on the server
-                            cat << 'INNER_EOF' > docker-compose.yml
-                            version: '3.8'
-                            services:
-                              backend:
-                                image: ${DOCKER_USERNAME}/game-hub-backend:latest
-                                ports:
-                                  - "5000:5000"
-                                restart: always
-                              frontend:
-                                image: ${DOCKER_USERNAME}/game-hub-frontend:latest
-                                ports:
-                                  - "80:80"
-                                restart: always
-                                depends_on:
-                                  - backend
-                            INNER_EOF
-                            
-                            // Log in to Docker Hub on the server, pull, and run
-                            echo ${DOCKER_PASSWORD} | sudo docker login -u ${DOCKER_USERNAME} --password-stdin
-                            sudo docker compose pull
-                            sudo docker compose up -d
-                        EOF
-                    '''
-                }
+                echo "Pushing Frontend Image..."
+                sh "docker push ${FRONTEND_IMAGE}"       
+                echo "Pushing Backend Image..."
+                sh "docker push ${BACKEND_IMAGE}"
             }
         }
     }
-
     post {
         always {
-            // Clean up Docker credentials from the Jenkins worker after the run
+            // Clean up credentials from the Jenkins workspace after running
             sh 'docker logout'
         }
         success {
-            echo "Pipeline completed successfully! The Game Hub is deployed."
+            echo "Pipeline completed! Images successfully pushed to Docker Hub."
         }
         failure {
-            echo "Pipeline failed. Check the logs for more details."
+            echo "Pipeline failed. Please check the stage logs."
         }
     }
 }
