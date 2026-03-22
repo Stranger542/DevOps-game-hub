@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    image: ${DOCKER_USERNAME}/game-hub-backend:latest
+    ports:
+      - "5000:5000"
+    restart: always
+
+  frontend:
+    build: ./frontend
+    image: ${DOCKER_USERNAME}/game-hub-frontend:latest
+    ports:
+      - "80:80"
+    restart: always
+    depends_on:
+      - backend

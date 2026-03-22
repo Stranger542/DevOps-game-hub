@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>Game Hub</h1>
+            <div id="student-info" class="student-card">
+                <p>Loading student details...</p>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="game-details" class="hidden panel">
+            <h2 id="detail-title"></h2>
+            <p id="detail-desc"></p>
+            <div class="action-buttons">
+                <a id="detail-download" href="#" class="btn primary">Download</a>
+                <button id="close-details" class="btn secondary">Close Details</button>
+            </div>
+        </section>
+
+        <section id="game-list-section">
+            <h2>Available Games</h2>
+            <div id="games-container" class="grid-container"></div>
+        </section>
+
+        <section id="request-section" class="panel form-panel">
+            <h2>Request a New Game</h2>
+            <form id="request-form">
+                <input type="text" id="game-title" placeholder="Game Title" required>
+                <textarea id="game-desc" placeholder="Game Description" rows="3" required></textarea>
+                <button type="submit" class="btn primary">Submit Request</button>
+            </form>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
