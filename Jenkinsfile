@@ -4,8 +4,8 @@ pipeline {
         // Pulls your Docker Hub credentials securely from Jenkins
         DOCKER_CREDS = credentials('docker-hub-credentials') 
         // Define the variables for your specific tagging format
-        REG_NO = "2023BCD0026"
-        ROLL_NO = "2023BCD0026"
+        REG_NO = "2023bcd0026"
+        ROLL_NO = "2023bcd0026"
         // Construct the full image tags dynamically
         FRONTEND_IMAGE = "${DOCKER_CREDS_USR}/${REG_NO}_${ROLL_NO}_frontend:latest"
         BACKEND_IMAGE = "${DOCKER_CREDS_USR}/${REG_NO}_${ROLL_NO}_backend:latest"
