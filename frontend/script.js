@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'http://100.48.7.111:5000';
 
 // 1. Fetch Student Details
 async function fetchStudentDetails() {
